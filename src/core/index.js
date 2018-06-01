@@ -1,3 +1,5 @@
+import constants from '../config/constants';
+import UI from './ui';
 import Tree from './meshes/tree';
 
 /**
@@ -12,6 +14,7 @@ class Core {
             this.renderer = this.configureRenderer();
             this.camera = this.configureCamera();
             this.controls = this.configureControls();
+            this.ui = new UI();
     
             this.init();
             this.animate(0);
@@ -27,6 +30,8 @@ class Core {
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
         return renderer;
     }
@@ -38,9 +43,9 @@ class Core {
      * environment.
      */
     configureCamera() {
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 10000); 
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 10000); 
         camera.updateProjectionMatrix();
-        camera.position.set(75,75,50);
+        camera.position.set(-275,275,250);
 
         return camera;
     }
@@ -72,6 +77,8 @@ class Core {
         this.renderer.setSize(window.innerWidth, window.innerHeight);
     }
 
+
+
     /**
      * @function: init
      * Initialises the environment. All the pieces of the scene are put
@@ -87,21 +94,43 @@ class Core {
         
 
         /** Set up lights to be used in the scene */
-        const light = new THREE.DirectionalLight(0xffffff, 0.8);;
-        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x080820, 0.8 );
+        const light = new THREE.DirectionalLight(0xffffff, 0.8);
+        light.position.set(100, 100, 100)
+        light.castShadow = true;
+        light.shadow.mapSize.width = 1024;  // default
+        light.shadow.mapSize.height = 1024;
 
-        const groundGeo = new THREE.PlaneBufferGeometry(100, 100, 1);
+        light.shadow.camera.near = 0.5;
+        light.shadow.camera.far = 400;
+        light.shadow.camera.left = -200;
+        light.shadow.camera.right = 200;
+        light.shadow.camera.top = 200;
+        light.shadow.camera.bottom = -200;
+
+        // const shadowHelper = new THREE.CameraHelper(light.shadow.camera);
+        // this.scene.add(shadowHelper)
+
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x080820, 0.4 );
+
+        const groundGeo = new THREE.PlaneBufferGeometry(300, 300, 1);
         const groundMat = new THREE.MeshLambertMaterial({ color: 0x0a420d, side: THREE.DoubleSide })
         const ground = new THREE.Mesh(groundGeo, groundMat);
         ground.rotation.x = - Math.PI * 0.5;
+        ground.receiveShadow = true;
 
-        const tree = new Tree();
-
+        constants.trees.forEach((tree, i) => {
+            const treeMesh = new Tree().mesh;
+            treeMesh.name = `tree-${i}`
+            const { x, y, z } = tree.position;
+            treeMesh.position.set(x, y, z)
+            this.scene.add(treeMesh);
+        })
+        
         /** Add all lights, meshes and shaders to the scene */
         this.scene.add(light);
         this.scene.add(hemiLight);
         this.scene.add(ground);
-        this.scene.add(tree.mesh);
+        this.scene.add(this.ui.HUD);
         
         /** Add event listeners for screen resizing */
         window.addEventListener('resize', this.onWindowResize.bind(this), false);
@@ -128,6 +157,7 @@ class Core {
     render(timestamp) {
         /** FPS counter */
         this.stats.update();
+        this.ui.positionUI(this.camera);
 
         /** Updates tweenjs animations for each frame */
         // TWEEN.update(timestamp);
