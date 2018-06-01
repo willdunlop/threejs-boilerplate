@@ -19,7 +19,7 @@ export default class UI {
         this.HUD.rotation.copy(camera.rotation);
         
         this.HUD.children.forEach(child => {
-            if (child.name === 'axesHelper') child.rotation.copy(camera.rotation);
+            if (child.name === 'axesHelper') child.rotation.y = camera.rotation.y;
         })
         
         this.HUD.updateMatrix();

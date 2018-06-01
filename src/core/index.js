@@ -1,6 +1,7 @@
 import constants from '../config/constants';
 import UI from './ui';
 import Tree from './meshes/tree';
+import Character from './meshes/character';
 
 /**
  * @class: Core
@@ -124,12 +125,16 @@ class Core {
             const { x, y, z } = tree.position;
             treeMesh.position.set(x, y, z)
             this.scene.add(treeMesh);
-        })
+        });
+
+        const character = new Character().mesh;
+        character.position.set(35,10,35);
         
         /** Add all lights, meshes and shaders to the scene */
         this.scene.add(light);
         this.scene.add(hemiLight);
         this.scene.add(ground);
+        this.scene.add(character);
         this.scene.add(this.ui.HUD);
         
         /** Add event listeners for screen resizing */
